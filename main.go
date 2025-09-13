@@ -2,28 +2,64 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/joho/godotenv"
 )
 
 var db *sql.DB
 
 func main() {
+	// Load .env
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found, using system environment")
+	}
 
-	var err error
-	// dsn := "root:@tcp(127.0.0.1:3306)/mysaas"
-	// vps
-	dsn := "andik:qc_789456@tcp(127.0.0.1:3306)/mysaas"
+	// Ambil stage
+	stage := getEnv("APP_STAGE", "dev")
 
+	// Tentukan koneksi database sesuai stage
+	var dsn string
+	switch stage {
+	case "dev":
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:3306)/%s",
+			getEnv("LOCAL_DB_USER", "root"),
+			getEnv("LOCAL_DB_PASSWORD", ""),
+			getEnv("LOCAL_DB_HOST", "127.0.0.1"),
+			getEnv("LOCAL_DB_NAME", "mysaas"),
+		)
+	case "vpn":
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:3306)/%s",
+			getEnv("VPN_DB_USER", "root"),
+			getEnv("VPN_DB_PASSWORD", ""),
+			getEnv("VPN_DB_HOST", "127.0.0.1"),
+			getEnv("VPN_DB_NAME", "mysaas"),
+		)
+	case "vps":
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:3306)/%s",
+			getEnv("VPS_DB_USER", "andik"),
+			getEnv("VPS_DB_PASSWORD", ""),
+			getEnv("VPS_DB_HOST", "127.0.0.1"),
+			getEnv("VPS_DB_NAME", "mysaas"),
+		)
+	default:
+		log.Fatal("Unknown APP_STAGE: ", stage)
+	}
+
+	// Connect DB
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
+	// Fiber setup
 	app := fiber.New()
 	app.Use(cors.New())
 
@@ -48,5 +84,15 @@ func main() {
 	app.Put("/api/ticket/:id", updateTicket)
 	app.Delete("/api/ticket/:id", deleteTicket)
 
-	log.Fatal(app.Listen(":3001"))
+	// Jalankan server di port dari .env
+	appPort := getEnv("APP_PORT", "3001")
+	log.Fatal(app.Listen(":" + appPort))
+}
+
+// helper ambil env dengan default
+func getEnv(key, fallback string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return fallback
 }
