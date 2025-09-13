@@ -12,8 +12,12 @@ import (
 var db *sql.DB
 
 func main() {
+
 	var err error
-	dsn := "root:@tcp(127.0.0.1:3306)/mysaas"
+	// dsn := "root:@tcp(127.0.0.1:3306)/mysaas"
+	// vps
+	dsn := "andik:qc_789456@tcp(127.0.0.1:3306)/mysaas"
+
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal(err)
