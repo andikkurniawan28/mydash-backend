@@ -52,6 +52,9 @@ func main() {
 		log.Fatal("Unknown APP_STAGE: ", stage)
 	}
 
+	log.Println("APP_STAGE:", stage)
+	log.Println("Using DSN:", dsn)
+
 	// Connect DB
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
