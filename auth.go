@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/smtp"
+	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -125,7 +126,9 @@ func registerProcess(c *fiber.Ctx) error {
 	token := generateVerificationToken(req.Email, appKey)
 
 	// bikin link verifikasi
-	verificationLink := fmt.Sprintf("http://147.139.177.186:3378/api/verify?email=%s&token=%s", req.Email, token)
+	// verificationLink := fmt.Sprintf("http://147.139.177.186:3378/api/verify?email=%s&token=%s", req.Email, token)
+	apiURL := os.Getenv("VPS_APP_URL")
+	verificationLink := fmt.Sprintf("%s/api/verify?email=%s&token=%s", apiURL, req.Email, token)
 
 	// kirim email (async)
 	go sendVerificationEmail(req.Email, verificationLink)
